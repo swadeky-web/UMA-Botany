@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>GeoBotanix — UMA-OR Rare Plants 2026</title>
+<style>
+:root{
+  --sand:#f5f0e4;--sand2:#ece6d3;--ink:#1a160e;--ink2:#4a3f2e;
+  --stone:#7a7060;--rust:#8b3a1a;--sage:#4a7030;--sky:#1a5070;
+  --gold:#9a7010;--chalk:#e0d8c0;
+  --t1:#6b1a1a;--t2:#1a3a6b;--t3:#1a4a30;--t4:#4a4010;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+html,body{height:100%;background:var(--sand);color:var(--ink);font-family:Georgia,serif;font-size:15px;line-height:1.6}
+body{max-width:820px;margin:0 auto}
+
+/* ── HEADER ─────────────────────────────────────── */
+.hdr{background:var(--ink);color:#f5f0e4;padding:11px 14px 9px}
+.hdr-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+.hdr h1{font-size:1rem;font-weight:700;line-height:1.25}
+.hdr .sub{font-size:.62rem;color:#a09070;margin-top:2px;letter-spacing:.04em}
+.tier-pills{display:flex;flex-wrap:wrap;gap:4px;margin-top:8px}
+.tp{font-family:monospace;font-size:.6rem;padding:2px 7px;border-radius:3px;font-weight:700}
+.tp1{background:var(--t1);color:#fff}
+.tp2{background:var(--t2);color:#fff}
+.tp3{background:var(--t3);color:#fff}
+.tp4{background:var(--t4);color:#fff}
+
+/* ── STICKY FILTER BAR ──────────────────────────── */
+.filter-bar{position:sticky;top:0;z-index:300;background:var(--sand2);border-bottom:1px solid var(--chalk);padding:7px 10px;display:flex;flex-direction:column;gap:6px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+
+/* habitat chips — single scrolling row */
+.hab-chips{display:flex;gap:6px;overflow-x:auto;-webkit-overflow-scrolling:touch;padding-bottom:2px;scrollbar-width:none}
+.hab-chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:5px 11px;border-radius:20px;border:1.5px solid var(--chalk);background:white;font-size:.72rem;font-family:Georgia,serif;color:var(--ink2);cursor:pointer;white-space:nowrap;transition:background .12s,border-color .12s}
+.chip:active{opacity:.75}
+.chip.active{background:var(--ink);color:#f5f0e4;border-color:var(--ink)}
+
+/* search + bloom row */
+.filter-row{display:flex;gap:7px;align-items:center}
+.filter-row input{flex:1;padding:6px 10px;border:1px solid var(--chalk);border-radius:8px;font-size:.82rem;background:white;font-family:inherit;outline:none;min-width:0}
+.filter-row select{padding:6px 6px;border:1px solid var(--chalk);border-radius:8px;font-size:.78rem;background:white;font-family:inherit;outline:none;cursor:pointer;flex-shrink:0}
+.rcount{font-size:.68rem;color:var(--stone);font-family:monospace;white-space:nowrap;flex-shrink:0}
+
+/* ── TIER HEADERS ───────────────────────────────── */
+.tier-hdr{padding:8px 14px 6px;border-top:3px solid transparent;background:var(--sand2)}
+.tier-hdr.t1{border-color:var(--t1)}.tier-hdr.t2{border-color:var(--t2)}.tier-hdr.t3{border-color:var(--t3)}.tier-hdr.t4{border-color:var(--t4)}
+.tier-hdr h2{font-size:.75rem;font-weight:700;letter-spacing:.05em;text-transform:uppercase;color:var(--ink2)}
+.tier-hdr p{font-size:.68rem;color:var(--stone);margin-top:1px}
+
+/* ── CARDS ──────────────────────────────────────── */
+.card{background:white;border-bottom:2px solid var(--sand2)}
+.stripe{height:3px}.s1{background:var(--t1)}.s2{background:var(--t2)}.s3{background:var(--t3)}.s4{background:var(--t4)}
+.card-hdr{display:flex;align-items:stretch;cursor:pointer;min-height:80px;-webkit-tap-highlight-color:transparent}
+.thumb{width:80px;min-height:80px;flex-shrink:0;background:#d8d0bc;overflow:hidden}
+.thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.thumb .noph{display:flex;align-items:center;justify-content:center;width:100%;height:100%;font-size:.57rem;color:var(--stone);text-align:center;padding:5px;line-height:1.3}
+.card-meta{flex:1;padding:8px 10px 7px;min-width:0}
+.sci{font-style:italic;font-size:.9rem;font-weight:700;color:var(--ink);line-height:1.2;margin-bottom:1px}
+.com{font-size:.77rem;font-weight:700;color:var(--rust);margin-bottom:4px}
+.tags{display:flex;flex-wrap:wrap;gap:3px;margin-bottom:3px}
+.tag{font-size:.58rem;padding:2px 5px;border-radius:3px;font-weight:700;letter-spacing:.03em;font-family:monospace}
+.tg1{background:#f5e8e8;color:var(--t1)}.tg2{background:#e8eef8;color:var(--t2)}
+.tg3{background:#e8f4e8;color:var(--t3)}.tg4{background:#f4f0e0;color:var(--t4)}
+.tg-hab{background:#f0e8d0;color:var(--stone)}.tg-bl{background:#e0f0e0;color:var(--sage)}.tg-co{background:#e8e0d0;color:#504030}
+.row2{font-size:.63rem;color:var(--stone);display:flex;gap:8px;flex-wrap:wrap}
+.exp-hint{font-size:.6rem;color:var(--stone);font-family:monospace;margin-top:2px}
+
+/* ── CARD BODY ──────────────────────────────────── */
+.card-body{display:none;padding:12px 14px;background:#fdfbf6;border-top:1px solid var(--chalk)}
+.card-body.open{display:block}
+.pstrip{display:flex;gap:5px;margin-bottom:11px;overflow-x:auto;-webkit-overflow-scrolling:touch}
+.pstrip img{width:88px;height:70px;object-fit:cover;border-radius:4px;flex-shrink:0}
+.pstrip .pload{width:88px;height:70px;background:var(--sand2);border-radius:4px;display:flex;align-items:center;justify-content:center;font-size:.58rem;color:var(--stone);flex-shrink:0}
+.sl{font-size:.6rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--rust);border-bottom:1px solid var(--chalk);padding-bottom:2px;margin:9px 0 4px}
+.sl:first-child{margin-top:0}
+.st{font-size:.79rem;line-height:1.6;color:#1a1408}
+.kl{list-style:none;padding:0}
+.kl li{font-size:.79rem;line-height:1.55;padding:3px 0 3px 13px;position:relative;color:#1a1408}
+.kl li::before{content:"▸";position:absolute;left:0;color:var(--rust);font-size:.65rem;top:5px}
+.kl li strong{color:var(--sage)}
+.abox{background:#fff3e0;border-left:3px solid var(--rust);padding:7px 10px;font-size:.76rem;line-height:1.55;color:#2a1000;margin:5px 0;border-radius:0 4px 4px 0}
+.ibox{background:#e8f4fc;border-left:3px solid var(--sky);padding:7px 10px;font-size:.76rem;line-height:1.55;color:#081828;margin:5px 0;border-radius:0 4px 4px 0}
+.wbox{background:#fffbe0;border-left:3px solid var(--gold);padding:7px 10px;font-size:.76rem;line-height:1.55;color:#20180a;margin:5px 0;border-radius:0 4px 4px 0}
+.inat-lnk{font-size:.7rem;color:var(--sky);text-decoration:none;display:inline-block;margin-top:7px}
+.no-res{text-align:center;padding:40px;color:var(--stone);font-size:.88rem}
+</style>
+</head>
+<body>
+
+<header class="hdr">
+  <div class="hdr-top">
+    <div>
+      <h1>GeoBotanix — UMA-OR Rare Plants 2026</h1>
+      <div class="sub">Umatilla NF · 54 North GNA Botanical Survey</div>
+    </div>
+  </div>
+  <div class="tier-pills">
+    <span class="tp tp1">TIER 1 Endemic/G1-G2</span>
+    <span class="tp tp2">TIER 2 Very Rare OR</span>
+    <span class="tp tp3">TIER 3 OR S1</span>
+    <span class="tp tp4">TIER 4 OR S2</span>
+  </div>
+</header>
+
+<!-- STICKY FILTER BAR -->
+<div class="filter-bar">
+  <div class="hab-chips" id="chips">
+    <div class="chip active" data-hab="" onclick="setHab(this,'')">All</div>
+    <div class="chip" data-hab="lithosol" onclick="setHab(this,'lithosol')">⬡ Lithosol</div>
+    <div class="chip" data-hab="riparian" onclick="setHab(this,'riparian')">〰 Riparian</div>
+    <div class="chip" data-hab="meadow" onclick="setHab(this,'meadow')">≋ Meadow</div>
+    <div class="chip" data-hab="forest" onclick="setHab(this,'forest')">♣ Forest</div>
+    <div class="chip" data-hab="alpine" onclick="setHab(this,'alpine')">▲ Alpine</div>
+    <div class="chip" data-hab="cliff" onclick="setHab(this,'cliff')">▦ Cliff</div>
+    <div class="chip" data-hab="aquatic" onclick="setHab(this,'aquatic')">◎ Aquatic</div>
+  </div>
+  <div class="filter-row">
+    <input type="text" id="search" placeholder="Search name, code, habitat…">
+    <select id="bloom-filter">
+      <option value="">All bloom</option>
+      <option value="may">May</option>
+      <option value="june">June</option>
+      <option value="july">July</option>
+      <option value="aug">August</option>
+      <option value="sept">September</option>
+    </select>
+    <span class="rcount" id="rcount">…</span>
+  </div>
+</div>
+
+<div id="cards"></div>
+
+<script>
+const SP = [
+  {code:"LOPA9",inat:480619,sci:"Lomatium pastorale",com:"Pastoral Biscuit-root",status:"OR Sensitive",globalRank:"G1G2/S1",bloom:"May–July",elev:"~5,000 ft",bloomMonths:["may","june","july"],substrate:"Lithosol — shallow, poorly developed soils; vernally moist",habitats:["lithosol"],priority:1,
+   keyChars:["Relatively <strong>broad, simple leaflets</strong> — distinctive among Blue Mountain lomatiums","Fruits narrowly elliptical on <strong>short but well-defined pedicels</strong>","<strong>Involucel dimidiate (one-sided)</strong> — key technical character","Often strongly decumbent peduncles at base, ascending toward middle","Yellow flowers"],
+   substrate_detail:"Lithosols; shallow, poorly-developed soils in open, vernally moist sites. Often on very gentle slopes.",where:"LOCAL ENDEMIC — only documented along FS Road 31 (Summit Road). Walla Walla RD (Umatilla NF) and La Grande RD (Wallowa-Whitman NF).",fieldCues:"Essentially a single-road endemic. Know FS Road 31 location before entering. Vernally moist lithosols, gentle topography.",survey:"Collect vouchers. Photograph all parts including fruits. Survey May–July.",confusable:"Lomatium leptocarpum — narrow nearly sessile fruits, well-developed involucel, more leaflets, upright inflorescences. L. ambiguum — use technical key.",likelihood:"HIGH at FS Road 31 (Summit Road) in the right season. ONLY known habitat."},
+
+  {code:"LOTA4",inat:480622,sci:"Lomatium tarantuloides",com:"Spider Biscuit-root",status:"OR Sensitive",globalRank:"G1/S1",bloom:"May–July",elev:"5,200–7,600 ft",bloomMonths:["may","june","july"],substrate:"Serpentine-derived lithosols — flat to gently sloping, ephemerally moist",habitats:["lithosol","alpine"],priority:1,
+   keyChars:["<strong>Prostrate flowering stems</strong> — lies flat on ground","White flowers (one known population with yellow)","<strong>Involucel bracts usually completely lacking or very poorly developed</strong> — diagnostic","Fruits elliptical with narrow wings, 5–5.5 mm; fruiting pedicels short (~2.5 mm)","Associates: Abies lasiocarpa, Fritillaria pudica, Lewisia pygmaea, Dicentra uniflora"],
+   substrate_detail:"Nearly exclusively on serpentine-derived lithosols. Flat to gently sloping sites in upper montane subalpine fir-dominated clearings. Ephemerally moist.",where:"Recently described endemic. Primarily on serpentine rocks in Greenhorn Mountains, Grant Co., OR. Sites on Malheur, Umatilla, and Wallowa-Whitman NFs.",fieldCues:"Target serpentine rock outcrops in upper montane zone — reddish/greenish ultramafic rock with unusual sparse vegetation. Co-occurring Fritillaria pudica and Lewisia pygmaea are indicator associates.",survey:"Prostrate habit with nearly absent involucel bracts are key. Collect vouchers. Serpentine substrate mandatory — confirm geologically.",confusable:"L. leptocarpum — yellow flowers, narrow nearly sessile fruits, well-developed involucel. L. pastorale — yellow, decumbent-then-upright peduncles.",likelihood:"LOW-MODERATE even on Umatilla NF. HIGH at confirmed serpentine sites in Greenhorn Mountains."},
+
+  {code:"POGA",inat:211481,sci:"Polygonum gabrielae",com:"Gabriel's Knotweed",status:"ORBIC List 1",globalRank:"G1/S1",bloom:"June–Aug",elev:"~4,600 ft",bloomMonths:["june","july","aug"],substrate:"Dry, barren, gravelly serpentine slopes",habitats:["lithosol"],priority:1,
+   keyChars:["Tiny annual; stems erect, <strong>3–10 cm</strong>","Oblanceolate leaves 8–20 mm, decreasing upward to short bracts","Flowers <strong>reflexed on stem</strong>; dense congested heads at branch tips","Tepals blunt, <strong>pure white with green unbranched midveins</strong>; perianth fused 10–50% of length","<strong>Achenes black</strong>; anthers 0.3–0.4 mm"],
+   substrate_detail:"Dry, barren, gravelly serpentine slopes. Essentially restricted to ultramafic substrate.",where:"Known from ONLY 1 location on Laycock Creek, Grant Co., OR. Newly described (Costea & Tardif 2005). Could be in similar serpentine areas on all three Blue Mountain forests.",fieldCues:"Serpentine (ultramafic) substrate mandatory. Bare gravelly outcrops with sparse stunted flora. Tiny — get on hands and knees.",survey:"If found on FS lands, will be added to sensitive list — document immediately with GPS, photos, population count. Collect voucher.",confusable:"P. austiniae — reflexed pedicels but open elongated inflorescences, widely spaced flowers, perianth fused 25–33%, anthers 0.1–0.2 mm.",likelihood:"LOW — single known site. Any serpentine outcrop in Grant Co. worth a careful look."},
+
+  {code:"ACWA",inat:119832,sci:"Eriocoma wallowaensis",com:"Wallowa Ricegrass",status:"OR Sensitive / FS Sensitive",globalRank:"G2G3/S2S3",bloom:"May–July",elev:"3,000–6,000 ft",bloomMonths:["may","june","july"],substrate:"Basalt lithosols — reddish, pebbly; shallow rocky",habitats:["lithosol"],priority:1,
+   keyChars:["Small clumpy perennial; stiff narrow basal leaves","<strong>Flower heads drooping, branches flexuous and diverging</strong> — key vs. E. hendersonii","Seeds globose, <strong>dark brown, glossy</strong>; glumes wide and obtuse","Lemmas with <strong>deciduous straight to weakly bent awn 5–11 mm</strong>","Formerly Achnatherum wallowaense"],
+   substrate_detail:"Basalt lithosols on reddish pebbly soils in northern Wallowa Co. Very little other plant cover. Ponderosa pine surrounding.",where:"Wallowa Co. NE Oregon; also Ochoco Mountains. No known sites on Malheur or Umatilla NFs — potentially on northern survey units near Wallowa County.",fieldCues:"Drooping panicle with flexuous branches. Reddish pebbly basalt lithosol. Look on ridgetops and rocky slopes with ponderosa pine.",survey:"Name change from Achnatherum wallowaense — update records. Any population on Umatilla NF would be significant. Compare with E. hendersonii (erect panicle).",confusable:"Eriocoma hendersonii — erect panicle, straight ascending/appressed branches. Poa secunda — 'railroad tracks' on leaves, several non-awned florets per spikelet.",likelihood:"LOW-MODERATE on northern Umatilla NF near Wallowa County. Look on basalt lithosols with ponderosa pine."},
+
+  {code:"ERDA3",inat:82248,sci:"Erigeron davisii",com:"Davis' Fleabane",status:"OR Sensitive / WA Sensitive",globalRank:"G2G3/S1",bloom:"May–June",elev:"3,500–6,000 ft",bloomMonths:["may","june"],substrate:"Rocky ridges, basalt outcrops, ponderosa pine openings",habitats:["cliff","lithosol"],priority:1,
+   keyChars:["Tufted, short (10–30 cm) white daisy; each stem with <strong>single head</strong>","Leaves mostly basal, very narrow (1–3.5 mm wide)","<strong>Stem hairy with long strigose hairs lying close to stem</strong> — requires magnification","Often also with spreading hairs — collect voucher for confirmation","Do not dig roots — pinch stem for voucher"],
+   substrate_detail:"Rocky ridges and slopes, basalt outcrops, sparsely vegetated woodland openings, dry ponderosa pine edges. Commonly with grasses.",where:"LOCAL ENDEMIC: Wallowa County OR, Asotin County WA, and adjacent west-central Idaho. Hells Canyon NRA, Wallowa Valley RD, and east of Pomeroy RD near Asotin.",fieldCues:"Rocky ridges and basalt outcrops. Tufted white single-headed daisies in rocky ponderosa pine openings.",survey:"Collect vouchers — requires high-power magnification to confirm strigose vs. spreading hairs. Record all white single-headed erigerons in this range with GPS.",confusable:"Erigeron disparipilus — ALL hairs spreading of different lengths; flowers become pinkish with age. E. chrysopsidis — identical habit but YELLOW flowers.",likelihood:"MODERATE in Wallowa County and Hells Canyon NRA. Any detection is significant."},
+
+  {code:"COTE13",inat:120897,sci:"Comastoma tenellum",com:"Lapland Gentian",status:"OR Sensitive / WA Sensitive",globalRank:"G4G5/S1",bloom:"Late June–August",elev:"6,000–11,000 ft",bloomMonths:["june","july","aug"],substrate:"Subalpine to alpine meadows; acidic soils; never on hummocks",habitats:["alpine"],priority:1,
+   keyChars:["Small (4–15 cm) annual; <strong>1–2 lavender flowers</strong> on long leafless stems","Four fused petals; <strong>lower inside of each petal clearly fringed</strong> — most diagnostic feature","Sepals NOT joined at base","Leaves mostly basal; small ovate leaves oppositely arranged on stem"],
+   substrate_detail:"Subalpine to alpine meadows. Never directly on hummocks. Associates: Salix planifolia, Vaccinium caespitosum, Carex spp., mosses.",where:"Only confirmed OR population on Steens Mountain. Unconfirmed Walla Walla RD record. Most likely Blue Mountain sites: Tollgate and Vinegar Hill (Umatilla NF), high Wallowas/Elkhorns, Strawberry Mountain.",fieldCues:"Subalpine wet meadows above 6,000 ft. Small annual with fringed petal interiors. Survey high-elevation open meadows near seeps and springs.",survey:"Any Blue Mountain population would be a major find. Photograph fringed petal interiors carefully.",confusable:"Gentiana prostrata — pleated corollas, unbranched, wider stem leaves. Gentianella amarella — mid-montane, sepals partially fused at base.",likelihood:"LOW — only one confirmed OR population. Worth searching all wet subalpine meadows above 6,000 ft."},
+
+  {code:"ASDID4",inat:64777,sci:"Astragalus diaphanus var. diurnus",com:"South Fork John Day Milkvetch",status:"OR Sensitive",globalRank:"G4/T2/S2",bloom:"May–Sept",elev:"2,500–3,600 ft",bloomMonths:["may","june","july","aug"],substrate:"Shallow gravelly soil over basalt; sandy banks of intermittent rivers; juniper zone",habitats:["riparian"],priority:2,
+   keyChars:["Creeping annual or biennial; stems 15–40 cm, <strong>red-tinged, strigose</strong>","Leaves often red-tinged; 7–15 leaflets, oblong/obovate, glabrous above","Flowers whitish; banner lavender-veined; keel purple-tipped","<strong>Pods ovoid, distinctly inflated, 1–3 cm</strong>, with dorsal groove, purple-green becoming translucent"],
+   substrate_detail:"Shallow gravelly soil over basalt, sandbars or sandy banks of intermittent rivers. Juniper woodlands. Associates: Artemisia tridentata, Lewisia rediviva, Salvia dorrii.",where:"Known ONLY from South Fork John Day River drainage, Grant Co., OR — within ~7-mile stretch near Jackass and Young's Creeks. One Malheur NF record (Deer Creek). Also Heppner RD.",fieldCues:"Gravelly/sandy streambanks in sage-juniper zone at low elevation. Red-tinged stems. Translucent inflated pods at maturity.",survey:"Collect and document BOTH var. diurnus and var. diaphanus until taxonomy resolved. Var. diaphanus has strongly curved, non-inflated fruits.",confusable:"A. diaphanus var. diaphanus — strongly curved, non-inflated fruits.",likelihood:"MODERATE at South Fork John Day drainage; LOW elsewhere. Know your unit location relative to this drainage."},
+
+  {code:"MESM",inat:51573,sci:"Melica smithii",com:"Smith's Melicgrass",status:"ORBIC List 2 / UMA Taxa of Interest",globalRank:"G4/S2?",bloom:"Late June–Sept",elev:"2,300–8,000 ft",bloomMonths:["june","july","aug"],substrate:"Cool, moist, shaded riparian — undisturbed; easily destroyed by grazing",habitats:["forest","riparian"],priority:2,
+   keyChars:["Tall grass (up to 1.5 m); loosely clumped, NOT rhizomatous","Sheaths closed; <strong>retrorsely scabrous</strong> — run finger UP the sheath, it feels rough","Ligules long (2–9 mm), blunt, often erose (raggedly torn)","Leaf blades wide/drooping (5–12 mm); panicle branches <strong>spreading to reflexed</strong>","<strong>Tiny pulvini (bumps) at panicle branch attachment points</strong>","Lemmas 10 mm, pubescent, <strong>bifid at apex</strong>; awn 3–10 mm"],
+   substrate_detail:"Cool, moist, shaded riparian areas. Shaded by alder, maple, cascara. Easily destroyed by grazing/trampling or overstory removal.",where:"One historical Wallowa record (1899). ONE recently reconfirmed site in Mill Creek Watershed, Walla Walla RD (Umatilla County, OR).",fieldCues:"Only known extant Umatilla NF site is Mill Creek Watershed (Walla Walla RD). Run finger UP the sheath to feel scabrous texture.",survey:"Document population size, health, and grazing impacts. Photograph pulvini at panicle branch attachments.",confusable:"Bromus vulgaris — long awns, hairy sheaths not scabrous. Festuca subulata — open sheaths, smooth, drooping. Melica subulata — lemma acuminate, not awned.",likelihood:"LOW on Umatilla NF — one confirmed site. Survey all cool shaded riparian corridors."},
+
+  {code:"PYSC4",inat:82397,sci:"Pyrrocoma scaberula",com:"Palouse Goldenweed",status:"OR Sensitive / WA Sensitive",globalRank:"G2/S1",bloom:"May–August",elev:"1,800–4,800 ft",bloomMonths:["may","june","july","aug"],substrate:"Deep loamy soils in bluebunch wheatgrass/Idaho fescue grasslands; dry ponderosa pine",habitats:["lithosol","cliff"],priority:2,
+   keyChars:["Tall perennial (25–70 cm); stems <strong>scabrid to hispid</strong>","Obvious sessile <strong>resinous glands</strong> on stems","Basal leaves large, narrow, coarsely toothed","Yellow ray flowers — <strong>known Umatilla NF population is RAYLESS</strong>","Phyllaries 1.5–5 mm wide, spreading, with <strong>'lacquered' appearance</strong>"],
+   substrate_detail:"Bluebunch wheatgrass and Idaho fescue grasslands in deep loamy soils. Surrounding forest dry ponderosa pine and Douglas fir.",where:"Endemic to canyon grassland sites in western Idaho, Asotin Co. WA, and Nez Perce Precious Lands in Wallowa Co., OR. One documented record on Pomeroy RD, Umatilla NF.",fieldCues:"Deep loamy canyon grasslands. Scabrid stems with resinous glands and lacquered phyllaries. IMPORTANT: known Umatilla NF population has RAYLESS flowers — do not dismiss plants lacking rays.",survey:"Rayless variant on Umatilla NF — do not dismiss yellow composites without rays. Document GPS, population count, photos of phyllaries and stem.",confusable:"Pyrrocoma liatriformis — lanate-tomentose stems, no resinous glands, phyllaries 1–3.5 mm. P. carthamoides — smaller, wider phyllaries, common in Blue Mountains.",likelihood:"LOW-MODERATE — highly restricted range. Know the Pomeroy RD site and survey canyon grasslands carefully."},
+
+  {code:"PEBR5",inat:51680,sci:"Pellaea bridgesii",com:"Bridges' Cliff-brake",status:"OR Sensitive",globalRank:"G4/S2",bloom:"May–Oct (spores)",elev:"3,500–7,000 ft",bloomMonths:["may","june","july","aug","sept"],substrate:"Rocky slopes and cliffs — granitic and argillite; talus, scree; southerly aspects",habitats:["cliff"],priority:2,
+   keyChars:["Small (up to 2 dm), clumpy, evergreen fern","Leaf segments <strong>round, entire, blue-green, glaucous</strong>","Spores borne naked on bottom of fronds (no indusium)","Stems wiry, brownish-black, one vascular bundle","<strong>Leaf segments fold in half when water-stressed</strong> — distinctive field behavior"],
+   substrate_detail:"Rocky slopes and cliffs on granitic substrate. Often on argillite rock types in Blue Mountains. Talus slopes, scree. Southerly aspects.",where:"Southern Wallowa and southern Elkhorn Mountains in OR. ONE population on Umatilla NF in Ben Harrison Peak area.",fieldCues:"Argillite outcrops on south-facing slopes. Evergreen — detectable year-round. Blue-green glaucous round leaf segments fold in drought.",survey:"Target argillite and granitic rocky slopes with southerly aspects. Document Ben Harrison Peak population and search nearby similar outcrops.",confusable:"Pellaea breweri — lower leaflets divided to look like butterfly wings; also at high elevations in Blue Mountains; not sensitive.",likelihood:"LOW — one documented Umatilla NF population. Check similar argillite outcrops near Ben Harrison Peak."},
+
+  {code:"CYFA",inat:61741,sci:"Cypripedium fasciculatum",com:"Clustered Lady's-slipper",status:"OR Sensitive",globalRank:"G4/S2",bloom:"Mid May–June",elev:"2,500–6,500 ft",bloomMonths:["may","june"],substrate:"Shaded seeps and riparian zones in grand fir to ponderosa pine forest",habitats:["forest"],priority:2,
+   keyChars:["<strong>Two elliptical leaves opposite and sessile on strongly hairy stem</strong>","2–4 purplish-green flowers often tucked under leaves","Plants 5–20 cm tall; pouched (slipper-shaped) flowers typical of Cypripedium","Very hairy stem visible under leaves — key field mark"],
+   substrate_detail:"Grand fir to ponderosa pine and warm riparian forests. Generally 60–100% shade. Seeps/springs and riparian zones.",where:"Pacific Northwest. Historic site in Wallowa Mountains. Often near Cypripedium montanum (not sensitive). Potential habitat throughout Blue Mountains.",fieldCues:"Survey shaded seeps and riparian forests in grand fir zone. Look for hairy stem under paired opposite leaves. Often near C. montanum.",survey:"Survey in shade along cold stream corridors in late May–June. Record any Cypripedium — note which species.",confusable:"Cypripedium montanum — much larger plant, 4–6 alternate leaves, large showy white pouch. Not sensitive.",likelihood:"MODERATE in appropriate shaded forest seep habitat. Survey grand fir riparian zones at mid-elevation."},
+
+  {code:"ERPY4",inat:78989,sci:"Eremothera pygmaea",com:"Dwarf Evening-primrose",status:"OR Sensitive / WA Sensitive",globalRank:"G3/S1",bloom:"June–Aug",elev:"450–5,000 ft",bloomMonths:["june","july","aug"],substrate:"Dry unstable soils or gravel in steep talus, dry washes, road cuts; open bare ground",habitats:["lithosol","riparian"],priority:2,
+   keyChars:["Erect, glandular-hairy annual; tiny flowers in spikes","Fruit curved, linear-fusiform; petals 1.5–2.5 mm","<strong>Seeds of lower capsules strongly papillose, dark brown; upper seeds smooth, whitish</strong> — two-toned is diagnostic","Stamens = style and stigma in length"],
+   substrate_detail:"Dry plains and slopes with unstable soils, gravel in steep talus, dry washes, road cuts. Open bare ground. Sometimes with big sage or bitterbrush.",where:"Regional endemic: central WA, OR south/east to SW Idaho, northern CA and NV. In OR: Grant, Harney, Wasco, Wheeler Cos. Historic records near Malheur and Umatilla NFs.",fieldCues:"Gravelly road cuts and unstable slope material. Bare ground in sage-juniper transition zones. Two-toned seeds (dark papillose below, white smooth above) with hand lens.",survey:"Very small — survey carefully on bare ground and road cuts. Collect seeds for confirmation.",confusable:"Eremothera minor — smaller petals (1–1.5 mm), shorter styles (1.2–3 mm). E. boothii — stamens shorter than styles, larger petals, all seeds alike.",likelihood:"MODERATE in gravelly road cuts and bare slopes at lower elevations near sage-juniper boundary."},
+
+  {code:"BOAT",inat:80048,sci:"Boechera atrorubens",com:"Sickle-pod Rockcress",status:"OR Sensitive / WA Review",globalRank:"G3/S2",bloom:"April–June",elev:"1,000–6,500 ft",bloomMonths:["may","june"],substrate:"Sagebrush slopes to rocky summits",habitats:["lithosol","cliff"],priority:3,
+   keyChars:["Biennial to short-lived perennial; stems sparsely pubescent toward base","Basal leaves oblanceolate, densely pubescent, margins usually dentate","<strong>Petals dark reddish-purple (drying to indigo)</strong>, 7–9 mm × 1.5–2 mm wide","Fruits ascending, not appressed to stalk, 4–12 cm × 1.7–2.2 mm","Short NON-overlapping trichomes on leaf surfaces"],
+   substrate_detail:"Sagebrush slopes to rocky summits. Possibly limited to east base of Cascades per new Hitchcock — collect all suspects for confirmation.",where:"New Hitchcock indicates narrow endemic at east base of Cascades (Kittitas–Klickitat WA and Wasco Co. OR). If correct, unlikely in Blue Mountains — collect any suspects.",fieldCues:"Dark purple-indigo flowers unusual and distinctive for a rockcress. Collect all dark-flowered Boechera from rocky sagebrush slopes.",survey:"Range uncertainty is high — collect vouchers of any suspect plants. Indigo-drying petals are the primary field cue.",confusable:"Boechera sparsiflora — densely hairy at stem base, entire leaf margins, lavender to white flowers, wider petals.",likelihood:"LOW-MODERATE — range uncertainty; collect any dark-flowered Boechera."},
+
+  {code:"DICO7",inat:51590,sci:"Diphasiastrum complanatum",com:"Ground-cedar",status:"OR Sensitive",globalRank:"G5/S2",bloom:"Year-round (spores)",elev:"0–6,000 ft",bloomMonths:["may","june","july","aug","sept"],substrate:"Dry open coniferous or mixed forest slopes; on rotting logs or thick duff",habitats:["forest"],priority:3,
+   keyChars:["Perennial mat-forming; <strong>looks like cedar boughs growing on the ground</strong>","Horizontal stems with appressed linear to lanceolate leaves","Spore-bearing branches distinct from leafy branches","Evergreen — detectable year-round"],
+   substrate_detail:"Dry open coniferous or mixed forest slopes. Often on rotting logs or in thick duff. Also meadows and open ridge tops.",where:"Circumboreal. Blue Mountains and North Cascades in OR. One known site on La Grande RD. Potentially throughout Blue Mountains.",fieldCues:"Older forests with deep duff. Cedar-bough appearance on ground is unique. Check rotting logs in shaded areas.",survey:"Evergreen — look any time of year. Document size of mat and associated canopy species.",confusable:"No similar-looking plants in the Blue Mountains — prostrate cedar-bough appearance is unique.",likelihood:"MODERATE in older forest with deep duff. Easy to overlook — look down carefully."},
+
+  {code:"DRPA2",inat:82234,sci:"Dracocephalum parviflorum",com:"American Dragonhead",status:"OR Sensitive / WA Review",globalRank:"G5/S2?",bloom:"June–August",elev:"3,500–10,000 ft",bloomMonths:["june","july","aug"],substrate:"Open, often moist places; fire-disturbed areas; foothills to moderate elevations",habitats:["meadow","forest"],priority:3,
+   keyChars:["Annual/biennial/short-lived perennial, 15–80 cm; square stems from taproot","Leaves coarsely serrate; flowers crowded in dense terminal or axillary cluster","<strong>Upper calyx tooth MUCH wider than lower four</strong> — diagnostic character","Corolla blue/purple or white, strongly bilabiate","Seeds require fire or disturbance for germination"],
+   substrate_detail:"Open often moist places from foothills to moderate mountain elevations. Fire-dependent germination — germinates after stand-replacing fires.",where:"Widely distributed across North America. Historic records in Union Co. (Hilgard, Medical Springs). Recent collection on WWNF in Hells Canyon NRA along Hat Point Road.",fieldCues:"Post-burn areas and disturbed moist openings. Upper calyx tooth unusually wide is the key field mark.",survey:"Upper calyx tooth width easy to check in field — compare the one wide tooth against the four narrow ones. Photograph calyx close-up.",confusable:"Lallemantia peltata (lion's heart) — invasive annual also with wide upper calyx tooth, but has nearly round aristate-toothed flower bracts. Found in Union County — confirm it's not this weed.",likelihood:"MODERATE in post-fire openings and moist disturbed areas at moderate elevations."},
+
+  {code:"ELBO",inat:120767,sci:"Eleocharis bolanderi",com:"Bolander's Spike-rush",status:"OR Sensitive",globalRank:"G4/S2",bloom:"May–Oct",elev:"3,300–9,000 ft",bloomMonths:["may","june","july","aug","sept"],substrate:"Vernally wet swales; intermittent stream edges; wet depressions in lithosols",habitats:["meadow","lithosol"],priority:3,
+   keyChars:["Densely cespitose perennial; <strong>base purplish</strong>","Dark sedge-like spikelets (3–8 mm); anthers big and showy","Fruit 1.5 mm; <strong>tubercle broad and depressed; fruits golden yellow, three-sided</strong>","<strong>Plants turn distinctly coppery in fall</strong> — excellent late-season indicator","Habitat and plants dry by mid-summer"],
+   substrate_detail:"Vernally wet swales, along intermittent streams, wet depressions in moist meadows and lithosols. Slight depressions that hold snow later. Usually ponderosa pine zone. Dry by mid-summer.",where:"Cascade and Blue Mountains OR, south to CA, east to SE Idaho and UT. Known from scattered locations on Malheur and Umatilla NFs.",fieldCues:"Vernally wet depressions in ponderosa pine zone. Coppery fall color and golden fruits excellent late-season field marks. Survey EARLY — habitat dries by mid-summer.",survey:"Survey early in season when wetted depressions still hold moisture. Look for slight topographic depressions with late snow retention.",confusable:"Eleocharis quinqueflora — fruits with long narrow beak. E. acicularis — lighter fruits with longitudinal ribs, somewhat rhizomatous. Carex filifolia — perigynia scales, male spike on top.",likelihood:"MODERATE in wet ponderosa pine zone depressions. Survey May–early July before habitat dries."},
+
+  {code:"OPPU3",inat:120819,sci:"Ophioglossum pusillum",com:"Adder's-tongue",status:"OR Sensitive / WA Sensitive",globalRank:"G4/S1",bloom:"Late June–Sept",elev:"40–6,500 ft",bloomMonths:["june","july","aug","sept"],substrate:"Seasonally wet areas — fens, wet meadows, floodplains, moist woods; seasonally flooded",habitats:["meadow","aquatic"],priority:3,
+   keyChars:["<strong>Undivided solitary leaf AND solitary terminal fertile spike</strong> — combination unique and diagnostic","Leaf blade simple, entire, pale green, dull, soft; oblanceolate to ovate (up to 10 × 3.5 cm)","Complex net venation with included free veinlets","Inconspicuous — easily overlooked among grasses and herbaceous vegetation"],
+   substrate_detail:"Seasonally wet areas in pastures, old fields, roadside ditches, bogs, fens, wet meadows, floodplains, moist woods, grassy swales.",where:"Circumboreal. OR coast and Cascades. One floodplain site in southern Wallowa Mountains. Recently found in Grant County on Malheur NF. Could occur throughout Blue Mountain forests in mountain fens.",fieldCues:"Slow down and look carefully in wet meadows and fens — very inconspicuous. No other plant has the single entire leaf plus distinct fertile spike combination.",survey:"Get on hands and knees in wet meadow and fen settings. Do not rush.",confusable:"No other plants in Blue Mountains have this combination of simple undivided leaf plus distinct fertile spike. Unmistakable if observed closely.",likelihood:"LOW-MODERATE — easily overlooked. Worth careful searching in any mountain fen or wet meadow."},
+
+  {code:"TRAL8",inat:82404,sci:"Trollius albiflorus",com:"American Globeflower",status:"OR Sensitive",globalRank:"G5?/S1",bloom:"June–Aug",elev:"4,000–10,000 ft",bloomMonths:["june","july","aug"],substrate:"Open wet places; seeps, springs, vernally wet swales in spruce/subalpine fir forest",habitats:["alpine","meadow"],priority:3,
+   keyChars:["Plants glabrous; leaves <strong>deeply cut into five segments</strong>","<strong>Flowers large, solitary, showy, creamy white</strong> — globe-shaped in bud","Fruits dry upright capsule with four seeds per pod","Grows in open wet places in subalpine fir zone"],
+   substrate_detail:"Open, wet places, more or less acidic soils, montane to alpine. Seeps, springs, and vernally wet swales in spruce and subalpine fir forests.",where:"Pacific Northwest and Rocky Mountains. Known from upper rim of Hells Canyon in Wallowa Co. Reported from Umatilla NF (Tiger Creek, WA) and Deschutes NF.",fieldCues:"Large showy white flowers in wet/seepy subalpine areas — relatively easy to spot when in bloom.",survey:"Document population size and distribution. One of the more visually distinctive survey targets when in bloom.",confusable:"Trautvetteria caroliniensis — similar leaves but slightly pubescent on underside; only one fruit per pistil; flowers much smaller.",likelihood:"MODERATE-HIGH in wet seeps in subalpine fir zone — large showy flowers make it easy to detect."},
+
+  {code:"TRDO",inat:80268,sci:"Trifolium douglasii",com:"Douglas' Clover",status:"OR Sensitive / WA Sensitive",globalRank:"G3/S2",bloom:"May–July",elev:"3,500–5,500 ft",bloomMonths:["may","june","july"],substrate:"Moist/mesic meadows, riparian areas, swales, vernally wet areas; alluvial soils",habitats:["meadow","riparian"],priority:3,
+   keyChars:["Tall (20–50 cm), perennial, rhizomatous clover","Three acuminate-tipped leaflets, NOT hairy on top","Flower stalks upright even in fruit","Pinkish-purple flowers (14–20 mm) in large globose head <strong>WITHOUT cup-like involucre</strong>","<strong>Calyx with 20 prominent nerves; upper calyx teeth usually strongly curved downward</strong>"],
+   substrate_detail:"Moist or mesic meadows, along riparian areas, in swales and vernally wet areas. Alluvial soils, ash/clay, fine silt to sandy.",where:"NE Oregon, W Idaho, SE Washington. SW portion of La Grande RD (WWNF) and adjacent North Fork John Day RD (Umatilla NF). One population on Pomeroy RD, Umatilla NF.",fieldCues:"Moist meadows and riparian areas on North Fork John Day RD. 20 prominent calyx nerves and downward-curved upper teeth are key.",survey:"Confirmed on North Fork John Day RD — look proactively in moist meadows. Document population size and condition. Note grazing impacts.",confusable:"Trifolium plumosum — similar growth, elongated heads at maturity, very hairy calyx. T. wormskjoldii — cup-shaped involucral bract under flower heads, smaller flowers.",likelihood:"MODERATE on North Fork John Day RD in moist meadows. Confirmed on this unit — active search warranted."},
+
+  {code:"ACHE10",inat:119832,sci:"Eriocoma hendersonii",com:"Henderson's Ricegrass",status:"OR Sensitive",globalRank:"G3/S2",bloom:"May–July",elev:"3,000–5,000 ft",bloomMonths:["may","june","july"],substrate:"Basalt scablands and lithosols; shallow rocky soils; sagebrush steppe",habitats:["lithosol"],priority:4,
+   keyChars:["Small clumpy perennial; basal leaves tightly rolled/folded","Culms 10–35 cm; <strong>branches straight, ascending to appressed</strong>","One floret per spikelet; glumes wide and blunt","<strong>Lemmas with deciduous straight awn (6–10 mm)</strong>; seeds globose, dark brown, glossy","Formerly Achnatherum hendersonii"],
+   substrate_detail:"Basalt scablands and lithosols, shallow rocky soils with Sandberg's bluegrass. Sagebrush steppe.",where:"Central WA and central OR. Documented on Ochoco NF. No known populations in Blue Mountains but potentially there.",fieldCues:"Basalt lithosols in sagebrush steppe. Erect/appressed panicle distinguishes from E. wallowaensis (drooping).",survey:"Name change from Achnatherum hendersonii — update records. Collect any small clumpy grasses from basalt lithosols in sagebrush steppe.",confusable:"Eriocoma wallowaensis — drooping flower heads, flexuous diverging branches. Poa secunda — 'railroad tracks' on leaves, several florets per spikelet.",likelihood:"LOW in Blue Mountains — no confirmed sites but appropriate habitat exists."},
+
+  {code:"ACNE10",inat:119840,sci:"Eriocoma nevadensis",com:"Nevada Needlegrass",status:"OR Sensitive",globalRank:"G4/S2",bloom:"June–Oct",elev:"5,900–7,200 ft",bloomMonths:["june","july","aug"],substrate:"Montane to subalpine sagebrush steppe and open woodlands",habitats:["alpine","lithosol"],priority:4,
+   keyChars:["Clumpy perennial grass, 20–85 cm; stems usually with <strong>downward-pointing hairs below lower nodes</strong>","Leaves tightly rolled, 1–3 mm wide; inflorescences branches appressed","Lemma awns <strong>20–30 mm, persistent, bent twice</strong> with spreading hairs 0.5–1.5 mm","Callus 0.5–0.7 mm, not hairy on dorsal side","Formerly Achnatherum nevadense"],
+   substrate_detail:"Montane to subalpine sagebrush steppe and open woodlands at high elevation (5,900–7,200 ft).",where:"CA, ID, NV, WA, east to WY. Vouchers from Steens Mtns. Historic record from Two Color Creek in southern Wallowa Mountains.",fieldCues:"High-elevation subalpine sagebrush openings. Persistent bent awns with spreading hairs. Survey above 5,900 ft.",survey:"Name change from Achnatherum nevadense. High-elevation specialist — target subalpine sagebrush openings on upper units.",confusable:"Achnatherum occidentale ssp. californicum — calluses 0.8–1.2 mm, glabrous area on dorsal side narrow, palea 40–60% as long as lemma.",likelihood:"LOW — no confirmed Blue Mountain sites; historic Wallowa record only."},
+
+  {code:"ACRI8",inat:499102,sci:"Eriocoma richardsonii",com:"Richardson's Ricegrass",status:"OR Sensitive / WA Sensitive",globalRank:"G5/S2?",bloom:"June–Oct",elev:"3,600–4,900 ft",bloomMonths:["june","july","aug"],substrate:"Grasslands, sagebrush steppe, open woodlands; often sandy or gravelly",habitats:["lithosol"],priority:4,
+   keyChars:["Tall (30–100 cm) clumpy grass","<strong>Wavy, spreading inflorescence branches unique among needlegrasses</strong>","Stems and basal sheaths hairless; anthers 2.5–3 mm with brush-like tuft at tip","Flowering heads 7–25 × 7–15 cm, often purplish; branches divergent, flexuous","Lemma awns 15–25 mm, persistent, bent twice; formerly Achnatherum richardsonii"],
+   substrate_detail:"Grasslands, sagebrush steppe, open woodlands, often on sandy or gravelly substrate.",where:"WA state, north to Yukon, NE to Manitoba, east to S. Dakota. ONLY documented Oregon site: 27 air miles SW of La Grande. On Umatilla NF list for Pomeroy and Walla Walla RDs but no vouchers confirmed.",fieldCues:"Spreading wavy flowering branches are unique among needlegrasses — very distinctive in field.",survey:"Name change from Achnatherum richardsonii. Spreading wavy branches are diagnostic — no other needlegrass in the area has this.",confusable:"No other needlegrasses have spreading wavy flowering branches — the most field-distinctive character in the genus.",likelihood:"LOW — no confirmed Blue Mountain vouchers. Survey open grasslands on Pomeroy and Walla Walla RDs."},
+
+  {code:"PIEX4",inat:120750,sci:"Piptatheropsis exigua",com:"Little Mountain Ricegrass",status:"OR Sensitive / WA Review",globalRank:"G4G5/S2?",bloom:"June–August",elev:"3,900–9,100 ft",bloomMonths:["june","july","aug"],substrate:"Rocky slopes and outcrops in upper montane; mountain meadows to subalpine ridges",habitats:["lithosol","alpine"],priority:4,
+   keyChars:["Densely tufted perennial; narrow inflorescences with one lemma per floret","Lemmas short, spindle-shaped; margins separate their entire length","<strong>Twisted awns (3.9–7 mm) stay on fruit, bend ~90° when mature</strong> — diagnostic","Ligules acute, 1.2–3.5 mm; blades folded, 0.4–0.8 mm wide","Formerly Piptatherum exiguum"],
+   substrate_detail:"Rocky slopes and outcrops in upper montane regions; sandy to rocky soil in mountain meadows to subalpine and alpine ridges.",where:"OR, CA, ID, NV, WA, north to BC and Alberta. Records on Malheur and WWNF. Reported for North Fork John Day RD on Umatilla NF (no voucher confirmed).",fieldCues:"90-degree awn bend at maturity is diagnostic. Reported for North Fork John Day RD — search rocky montane sites.",survey:"Collect any tufted montane ricegrass from rocky sites. 90-degree awn bend is visible with hand lens.",confusable:"Achnatherums (needlegrasses) — lemma margins overlapping, awns deciduous, usually much longer.",likelihood:"MODERATE on North Fork John Day RD rocky montane sites — reported but no voucher. Active survey warranted."},
+
+  {code:"PHMU3",inat:78048,sci:"Phlox multiflora",com:"Many-flowered Phlox",status:"OR Sensitive / WA Review",globalRank:"G5/S1",bloom:"June–July",elev:"3,000–6,000 ft",bloomMonths:["june","july"],substrate:"Basalt cliffs, rocky outcrops, wooded rocky areas in dry forest",habitats:["cliff","lithosol"],priority:4,
+   keyChars:["Diffuse, widely spreading perennial; NOT glandular","Leaves relatively long (1–3 cm), broadly linear, very slightly rough but not hairy","Flowers relatively large (2 cm across), <strong>white</strong>; styles 4–10 mm","Calyx lobes 4–8 mm; membranes NOT keeled, as wide or wider than herbaceous portion"],
+   substrate_detail:"Basalt cliffs, rocky outcrops and bluffs, rocky openings and wooded rocky areas in dry forest.",where:"Western US. Disjunct in Grande Ronde drainage, Union Co., OR (La Grande RD). Recent collections on Walla Walla and Pomeroy RDs in Washington.",fieldCues:"Non-glandular; long non-hairy leaves; large white flowers. Look on rocky cliff faces and outcrops in dry forest.",survey:"Photograph calyx and leaf carefully — multiple similar Phlox in area. Large white flowers help when in bloom.",confusable:"Phlox diffusa — hairy at leaf base, calyx with tangled pubescent hairs. P. longifolia — pink-flowered, very long styles, strongly carinate calyx.",likelihood:"MODERATE on Walla Walla and Pomeroy RDs — recent WA collections. Search rocky outcrops and cliff faces."},
+
+  {code:"PHMI7",inat:80018,sci:"Phacelia minutissima",com:"Least Phacelia",status:"OR Sensitive / WA Sensitive / FS C-listed",globalRank:"G3/S1",bloom:"June–July",elev:"3,000–8,200 ft",bloomMonths:["june","july"],substrate:"Moist, open places; vernally moist swales in ponderosa pine, aspen, or Douglas fir",habitats:["meadow","forest"],priority:4,
+   keyChars:["Tiny annual — <strong>less than 5 cm tall</strong>","Flowers light purple, barely extending past calyx","<strong>Calyx maturing unevenly — one sepal often much longer than others</strong> — diagnostic","Leaves entire, slightly hairy, with stalked glands","Often with Veratrum (corn lily)"],
+   substrate_detail:"Moist, open places, stream banks, meadows, ephemerally moist swales. Vernally moist openings in ponderosa pine, aspen, or Douglas fir forests.",where:"Widely scattered in intermountain west. Around flanks of Wallowa Mountains. Scattered on Malheur NF. No records on Umatilla NF but likely to be present in appropriate habitat.",fieldCues:"Very small — survey carefully on hands and knees in open vernally moist spots with Veratrum. Unequal calyx sepal is key.",survey:"Now 'Least phacelia' (name updated). Active survey warranted — noted as likely present. Target moist openings with Veratrum.",confusable:"Other small annual Phacelias — key feature is unequally maturing calyx with one much-longer sepal.",likelihood:"MODERATE — noted as 'likely present' on Umatilla NF. Survey moist ponderosa pine openings with Veratrum."},
+
+  {code:"MUMI2",inat:51634,sci:"Muhlenbergia minutissima",com:"Annual Dropseed",status:"OR Sensitive",globalRank:"G5/S2",bloom:"Late June–Sept",elev:"1,300–7,500 ft",bloomMonths:["june","july","aug","sept"],substrate:"Sandy soils on riverbanks, moist meadows, pond shores; open sandy slopes and seeps",habitats:["riparian","meadow"],priority:4,
+   keyChars:["Tufted short-lived annual; leaves 1–2 mm wide; ligules 1–2 mm","Open relatively large inflorescence (10–20 cm)","Culms 1–2.5 dm; <strong>solid, short hairy below nodes</strong>","Florets one-flowered; minutely pubescent glumes; lemmas 0.8–1.5 mm"],
+   substrate_detail:"Sandy soils on riverbanks, moist meadows, pond shores and reservoir edges. Open, more or less disturbed, sandy slopes and seeps.",where:"Widespread throughout west. Historical Union Co. site not confirmed. Moderate probability on all Blue Mountain forests.",fieldCues:"Small annual grass in sandy riparian soils — easy to overlook. Target disturbed sandy seep areas and riverbanks.",survey:"Annual — collect specimens with complete inflorescence. Look in sandy disturbed ground along streams.",confusable:"Muhlenbergia asperifolia — rhizomatous perennial, glabrous to scabrous glumes. All other Muhlenbergias have contracted panicles.",likelihood:"MODERATE in sandy riparian and moist meadow settings."},
+
+  {code:"HECU3",inat:56498,sci:"Heliotropium curassavicum",com:"Salt Heliotrope",status:"OR Sensitive",globalRank:"G5/S2",bloom:"May–June",elev:"140–5,000 ft",bloomMonths:["may","june"],substrate:"Wet ground, saline flats, alkaline soils; edges of vernal pools",habitats:["riparian","meadow"],priority:4,
+   keyChars:["Weakly ascending (1–6 dm); plant <strong>fleshy, glabrous</strong>","Thick <strong>bluish leaves 1–6 cm</strong>, oblanceolate","White to purplish flowers with yellow/purple throats in <strong>coiled inflorescences</strong>","Ovary shallowly lobed with NO styles; stigma expanded on top of ovary"],
+   substrate_detail:"Wet ground, saline flats, alkaline soils. Around edges of vernal pools. Low to moderate elevations.",where:"Widespread in North America; mostly east of Cascade crest in OR and WA. Potentially in Blue Mountain forests.",fieldCues:"Alkaline/saline habitat specialist. Blue-green fleshy leaves in coiled inflorescences are distinctive and unusual for the Blue Mountains.",survey:"Target saline seeps and alkali flats at lower elevations.",confusable:"No other Blue Mountain plants have fleshy glaucous leaves with coiled inflorescences and a sessile stigma.",likelihood:"LOW-MODERATE — look in alkaline and saline flats at lower elevations."},
+
+  {code:"CAID",inat:120934,sci:"Carex idahoa",com:"Idaho Sedge",status:"OR Sensitive",globalRank:"G3/S1",bloom:"July–Sept",elev:"4,500–6,000 ft",bloomMonths:["july","aug","sept"],substrate:"Sub-irrigated meadows around headwater streams, springs; soils dry out in summer",habitats:["meadow"],priority:4,
+   keyChars:["Rhizomatous, turf-forming sedge; usually <strong>dioecious</strong> (male/female separate plants)","Leaves narrow (2–5 mm), slightly glaucous (bluish); stems 24–40 cm","Typically ONE long terminal spikelet (2–3 cm) or up to 3 small spikes clustered below","Scales dark red-brown to purple-black with paler mid-stripe","Perigynia yellowish to brown, 2–3 mm, veinless; stigmas 3; beak 0.2–0.3 mm"],
+   substrate_detail:"Flat to gently sloping meadows around headwater streams, springs. Often with Carex praegracilis and/or Poa pratensis. Sub-irrigated soils that dry out in summer.",where:"Intermountain west: OR, ID, MT, UT. In OR, only confirmed from Silvies Valley, Grant Co. (Malheur NF). Potentially in southern portions of Umatilla and Wallowa-Whitman NFs.",fieldCues:"Sub-irrigated headwater meadows that dry out by late summer. Single terminal spikelet and dioecious habit help in field. Glaucous leaves.",survey:"Look in sub-irrigated headwater meadows at 4,500–6,000 ft on southern Umatilla NF units. Dioecious — note if plants are all one sex.",confusable:"Carex praegracilis — yellow-green leaves, dark/black rhizomes, multiple short spikes, 2 stigmas, veined perigynia. Very common dioecious species.",likelihood:"LOW on Umatilla NF — no confirmed sites. Worth surveying headwater meadows."},
+
+  {code:"CALAA",inat:49561,sci:"Carex lasiocarpa var. americana",com:"Slender Woolly Sedge",status:"OR Sensitive",globalRank:"G5/T5/S2",bloom:"Late June–Sept",elev:"1,260–5,350 ft",bloomMonths:["june","july","aug","sept"],substrate:"Fens, bogs, lakeshores; deep organic acid soils; sometimes floating mats",habitats:["aquatic","meadow"],priority:4,
+   keyChars:["Rhizomatous; culms 40–120 cm","Perigynia <strong>short-hairy</strong>; leaf sheaths glabrous, fibrillose, shiny varnished reddish-brown","Leaves very narrow, triangular in cross-section; <strong>tips curl</strong>","Lowest inflorescence bract very long, divergent, shiny"],
+   substrate_detail:"Fens, bogs, lakeshores, streambanks, seepage areas, wet meadows. Deep, organic acid soils. Sometimes forming floating mats.",where:"Circumboreal south to CA, MT, MN, VA. Cascades of OR/WA, northeastern WA, Blue Mountains of NE Oregon. Documented in southern Hells Canyon NRA. One Union County record.",fieldCues:"Acidic fen/bog settings with deep organic soils. Curling leaf tips and hairy perigynia are distinctive.",survey:"Target acidic fen and bog settings with deep organic soils.",confusable:"Carex pellita — shorter, broader leaves (2.2–4.5 mm), flat to M-shaped, not curling at tip; grows in broader diversity of wetlands.",likelihood:"MODERATE in acidic fen and bog settings at appropriate elevations."},
+
+  {code:"UTOC",inat:82518,sci:"Utricularia ochroleuca",com:"Northern Bladderwort",status:"OR Sensitive",globalRank:"G4/S1",bloom:"June–Aug",elev:"0–6,500 ft",bloomMonths:["june","july","aug"],substrate:"Shallow ponds, slow-moving streams, wet sedge or rush meadows",habitats:["aquatic"],priority:4,
+   keyChars:["Aquatic with insect-catching bladders; leaves highly divided (2.5–10 mm), flat","U. ochroleuca: ultimate leaf segment margins <strong>toothed, often bristle-tipped</strong>","Flower corollas 8–11 mm × 7–13 mm; <strong>conspicuous rounded palate</strong>","Spur up to 1/2 as long as lower petal","<strong>CRITICAL: Collect voucher specimens — bladderworts are notoriously difficult to ID</strong>"],
+   substrate_detail:"Shallow ponds, slow-moving streams, wet sedge or rush meadows. Often with bulrush and other bladderworts.",where:"Circumboreal; most OR sites coast or Cascades. Records in northern Idaho and Montana indicate potential in Blue Mountains.",fieldCues:"Aquatic plant with small yellow flowers emerging above water. Toothed leaf segments (vs. entire in U. minor).",survey:"Collect voucher specimens — bladderworts are notoriously difficult to identify from photos alone. Must collect in flower.",confusable:"Utricularia minor — leaf segments usually entire, corollas 3.5–8 mm, small/absent palate. U. vulgaris — common, leaves 20–50 mm, flowers 10–20 mm.",likelihood:"LOW-MODERATE — look in shallow ponds and slow streams. Collect for confirmation."},
+
+  {code:"BOAS2",inat:120726,sci:"Botrychium spp.",com:"Moonworts (8 sensitive species)",status:"OR Sensitive / WA Sensitive",globalRank:"G3–G5/S1-S2 (varies)",bloom:"Late June–Sept",elev:"2,000–8,000 ft",bloomMonths:["june","july","aug","sept"],substrate:"Bogs, marshes, seeps, grassy streambanks, mesic meadows, coniferous forest openings",habitats:["meadow","forest"],priority:4,
+   keyChars:["Plants 2–20 cm tall; <strong>two above-ground parts: vegetative trophophore and reproductive sporophore</strong>","Identification based on trophophore blade shapes — <strong>technical key required for species separation</strong>","Plants sometimes dormant for extended periods","8 sensitive species: ascendens, crenulatum, hesperium, lineare, lunaria, montanum, paradoxum, pedunculosum"],
+   substrate_detail:"Bogs, marshes, seeps, springs, grassy stream banks, mesic meadows, openings and edges of coniferous forests. Associates: Fragaria, Antennaria, bryophytes.",where:"All 8 sensitive species may occur on Umatilla NF. Known from scattered locations across Blue Mountains. B. lineare is FS designated. Document ALL moonwort encounters.",fieldCues:"Inconspicuous — look carefully in wet meadow and fen settings during late June–September. Strawberry and pussytoes are common associates.",survey:"Do NOT dig entire plant — pinch off at base. Technical key mandatory for species-level ID. B. lineare is the highest-priority individual species.",confusable:"Multiple non-rare Botrychiums exist in the area — a technical key is mandatory.",likelihood:"MODERATE in appropriate wet meadow and seep habitats. Inconspicuous but present when habitat is right."},
+
+  {code:"CARE4",inat:75278,sci:"Carex retrorsa",com:"Retrorse Sedge",status:"OR Sensitive",globalRank:"G5/S1",bloom:"June–Sept",elev:"0–6,500 ft",bloomMonths:["june","july","aug","sept"],substrate:"Floodplains, streamsides, lakeshores, swamps, wet meadows; sandy riverbanks",habitats:["riparian","meadow"],priority:4,
+   keyChars:["Densely cespitose; culms 10–100 cm; several spikes crowded with long inflorescence bracts","Male spike located right on top of upper female spike","<strong>Perigynia inflated; lower perigynia spreading DOWNWARD at maturity</strong> — diagnostic","Sites wet in spring, may dry out by late summer"],
+   substrate_detail:"Floodplains in forests, streamsides, lakeshores, swamps, wet thickets, wet meadows, sandy riverbanks.",where:"Circumboreal south to UT and PA. Scattered in OR and WA. In NE Oregon known from south end of Wallowa Mountains. Most populations isolated and very small.",fieldCues:"Downward-pointing perigynia at maturity is the key field character. Look in riparian and wetland settings.",survey:"Most populations very small — document all with GPS and population count.",confusable:"Carex utriculata — rhizomatous, more separated ascending spikes, perigynia not pointing downward. Carex vesicaria — loosely clumpy, ascending spikes and perigynia.",likelihood:"MODERATE in riparian and wet floodplain settings."},
+
+  {code:"RORA",inat:79220,sci:"Rotala ramosior",com:"Toothcup",status:"OR Sensitive / WA Sensitive",globalRank:"G5/S2",bloom:"June–Aug",elev:"200–5,000 ft",bloomMonths:["june","july","aug"],substrate:"Damp fine silt and sand, wet swampy places, mudflats, lake and pond margins",habitats:["aquatic","riparian"],priority:4,
+   keyChars:["Small annual semi-aquatic; leaves <strong>gradually tapered to narrow base</strong> (petiole)","<strong>1 pink to whitish flower per leaf axil</strong>; four petals per flower","Short styles (<1 mm); very short calyx lobes","Fruiting capsules open along regular septa","Common name recently changed from 'Lowland toothcup' to 'Toothcup'"],
+   substrate_detail:"Damp areas in fine silt and sand, wet swampy places, mudflats, lake and pond margins.",where:"Widespread in North America. Most OR sites west of Cascades. One site near Diamond Craters, Harney Co. Recently found on Malheur NF.",fieldCues:"Target mudflats and wet shores at lower elevations. Tapering leaf bases and single flowers per axil are key.",survey:"Look along muddy shores and riverbanks.",confusable:"Ammannia robusta — sessile to clasping oblong-lanceolate leaves, flowers in clusters of 1–5, styles 1–1.5 mm extending outside calyx.",likelihood:"LOW-MODERATE — look on mudflats and sandy shores at low elevation river sites."},
+
+  {code:"SAFA",inat:57113,sci:"Salix farriae",com:"Farr's Willow",status:"OR Sensitive",globalRank:"G4G5/S2",bloom:"Late May–Sept",elev:"6,500–9,500 ft",bloomMonths:["june","july","aug","sept"],substrate:"Wet meadows, streambanks at high elevation; some sites in limestone-influenced areas",habitats:["alpine"],priority:4,
+   keyChars:["Low shrub (up to 1 m); <strong>twigs dark red and shiny</strong>","Leaves not hairy; <strong>powdery white on bottom (glaucous)</strong>; elliptic, edges mostly entire","Ovary and fruits not hairy; scales brown or blackish, persistent, hairy inside","Styles short (0.4–0.7 mm)"],
+   substrate_detail:"Wet meadows and streambanks at moderate to high elevations. Several Wallowa sites in limestone-influenced areas.",where:"Circumboreal, south to MT, WY, OR, ID. Documented in high Wallowa Mountains. One unconfirmed site near Tollgate on Umatilla NF in OR.",fieldCues:"Dark red shiny twigs and glaucous leaf undersides are the best field marks at high elevation. Collect catkins for confirmation.",survey:"Willows are notoriously difficult — use technical key and collect catkins. Photograph both leaf surfaces.",confusable:"Multiple Salix spp. at high elevations — technical key required. Salix wolfii (also sensitive) also occurs in area.",likelihood:"MODERATE at high elevation wet meadows on Umatilla NF."},
+
+  {code:"SAWO",inat:57185,sci:"Salix wolfii",com:"Wolf's Willow",status:"OR Sensitive",globalRank:"G5?/S2",bloom:"June–Aug",elev:"Moderate to high",bloomMonths:["june","july","aug"],substrate:"Wet meadows and streamsides at moderate to high elevations",habitats:["alpine","riparian"],priority:4,
+   keyChars:["Willow with technical characters distinguishing from other Salix species","Formerly included Salix idahoensis as synonym","Collect catkins (male or female) for identification","Photograph leaves and buds; note twig color and pubescence"],
+   substrate_detail:"Wet meadows and streamsides at moderate to high elevations.",where:"Documented on Umatilla NF (North Fork John Day RD and other high-elevation areas). Also on WWNF and Malheur NF.",fieldCues:"Two sensitive willows in UMA-OR — survey wet meadow and streamside willows at all elevations. Collect catkins for both species.",survey:"Collect catkins for definitive ID. Photograph twig color, leaf surfaces (both sides), and catkin structure.",confusable:"Salix farriae — dark red shiny twigs, strongly glaucous leaf undersides, shorter styles. Multiple other Salix spp. — technical key required.",likelihood:"MODERATE at North Fork John Day RD — confirmed on unit. Survey wet meadow and stream willows."},
+
+  {code:"PODI",inat:53569,sci:"Potamogeton diversifolius",com:"Rafinesque's Pondweed",status:"OR Sensitive",globalRank:"G5/S1",bloom:"Mid July–early Sept",elev:"Up to 7,500 ft",bloomMonths:["july","aug","sept"],substrate:"Shallow creeks, ponds, ditches, and lakes; aquatic",habitats:["aquatic"],priority:4,
+   keyChars:["Branched aquatic; <strong>floating and submersed leaves different (dimorphic)</strong>","Floating leaves elliptical (0.5–3 cm), petiole <2× blade length","Submersed leaves narrow linear (0.1–0.5 mm wide); stipules of submersed leaves <strong>fused to leaf bases forming a sheath</strong>","Lower flowers spherical, submersed; upper emergent on long peduncle"],
+   substrate_detail:"Shallow creeks, ponds, ditches, and lakes. Aquatic.",where:"Reported for Steens Mtns in OR. Widespread in CA, BC, eastern US. Could potentially be in southern Blue Mountains.",fieldCues:"Dimorphic leaves (floating vs. submersed) are key. Technical pondweed key required.",survey:"Technical pondweed key required. Collect submerged material including stipules for ID.",confusable:"Potamogeton natans — stipules of submersed leaves NOT sheathing, attached directly at nodes.",likelihood:"LOW-MODERATE — look in shallow ponds and slow streams. Collect for confirmation."},
+
+  {code:"LIAR6",inat:120763,sci:"Lipocarpha aristulata",com:"Aristulate Lipocarpha",status:"OR Sensitive / WA Sensitive",globalRank:"G5?/S1",bloom:"May–October",elev:"100–2,300 ft",bloomMonths:["may","june","july","aug","sept"],substrate:"Sandy soils, emergent shorelines, stream banks, ponds, ditches; low elevation",habitats:["riparian","aquatic"],priority:4,
+   keyChars:["Tiny tufted annual (3–15 cm); flower heads subtended by 1–2 unequal bracts","<strong>Longest bract erect, appearing as continuation of stem</strong>","Spikes 1–3, sessile, ovoid; outer scale reddish-brown with long tapering gently curved point","Now classified SEN (not just OR-SEN) in 2024 SSS update"],
+   substrate_detail:"Sandy soils, emergent shorelines, stream banks, ponds, ditches. Plants may be under water early in season.",where:"Widespread in West; only known from Snake River in Hells Canyon and Columbia River in Umatilla Co. in OR. Near Columbia and Snake Rivers in SE Washington.",fieldCues:"Very small — easy to overlook on sandy banks. Target sandy margins of major rivers at low elevations.",survey:"Look on sandy riverbanks and emergent shorelines at low elevation. Status upgraded in 2024 — document any occurrence carefully.",confusable:"Lipocarpha micrantha — no or greatly reduced inner floral scales (<0.3 mm). Also along lower Snake River.",likelihood:"LOW-MODERATE — restricted to low-elevation major river banks."},
+
+  {code:"LEFL4",inat:119810,sci:"Leymus flavescens",com:"Yellow Wildrye",status:"OR Sensitive / WA Sensitive",globalRank:"G3/S1?",bloom:"June–Aug",elev:"Low to moderate",bloomMonths:["june","july","aug"],substrate:"Sandy to gravelly soils near rivers; open sandy slopes; low-elevation riparian",habitats:["riparian"],priority:4,
+   keyChars:["Rhizomatous perennial grass; <strong>yellow-green overall</strong> (flavescens = yellow)","Sandy river corridor specialist","Formerly Elymus flavescens","Technical grass key required — photograph ligules, auricles, and glumes"],
+   substrate_detail:"Sandy to gravelly soils near rivers, open sandy slopes. Low-elevation riparian and sandy-soil specialist.",where:"Pacific Northwest. Documented on Umatilla NF (Pomeroy RD area). Sandy riverbank habitats. Upgraded to SEN in 2024 SSS update.",fieldCues:"Sandy river corridor grasses. Yellow-green coloration. Survey sandy banks and bars of major rivers at lower elevations.",survey:"Status upgraded in 2024 — now SEN. Collect specimens with ligules, auricles, and mature spikelets for ID confirmation.",confusable:"Other Leymus and Elymus spp. — grass key required. Yellow-green coloration is helpful but not definitive.",likelihood:"MODERATE on sandy river bars and banks at lower elevations on Pomeroy RD."},
+
+  {code:"CYLU2",inat:411736,sci:"Cyperus lupulinus ssp. lupulinus",com:"Great Plains Flatsedge",status:"OR Sensitive / WA Review",globalRank:"G5?/S1",bloom:"May–August",elev:"100–2,000 ft",bloomMonths:["may","june","july","aug"],substrate:"Grassy slopes, rocky shorelines, edge of riparian zone; hackberry areas; low elevation",habitats:["riparian"],priority:4,
+   keyChars:["Tufted perennial; non-hairy triangular stems; flat leaves","Spikelets <strong>>2.5 mm wide</strong> in dense short clusters; anthers 0.3–0.6 mm","ALL flower scales have narrow pointy tip (0.25 mm)","<strong>Long bract below inflorescence horizontal or reflexed</strong>","NEW to 2024 SSS list — collect ALL Cyperus specimens"],
+   substrate_detail:"Grassy slopes, rocky shorelines, edge of riparian zone of ephemeral streams. Hackberry-dominated areas with prickly pear cactus and bluebunch wheatgrass.",where:"Central WA. Along Snake River in Hells Canyon and lower Grande Ronde River in Asotin Co. WA. New to 2024 SSS list.",fieldCues:"Low-elevation river corridors with hackberry. Reflexed or horizontal bract below inflorescence is key. Collect all Cyperus for verification.",survey:"New to 2024 SSS — may not be in older field guides. Collect vouchers of ALL Cyperus specimens encountered.",confusable:"C. schweinitzii — anthers 0.7–1.4 mm, scale tips longer, bracts more ascending. C. strigosus — spikelets <2 mm wide, elongate cylindrical clusters.",likelihood:"MODERATE at low-elevation river bank habitats along Snake and Grande Ronde rivers."},
+
+  {code:"SPMI3",inat:57261,sci:"Spartina pectinata",com:"Prairie Cordgrass",status:"WA Sensitive / ORBIC List 2",globalRank:"G5/S2",bloom:"June–Aug",elev:"1,000–4,000 ft",bloomMonths:["june","july","aug"],substrate:"Margins of larger rivers, wetter riparian zones, sandbars; tolerates alkaline",habitats:["riparian"],priority:4,
+   keyChars:["Tall (up to 2.5 m), rhizomatous perennial","<strong>Very sharp leaf edges</strong> — USE CAUTION; leaves 5–15 mm wide","Ligules of fine hairs, 1–3 mm; strongly ascending panicles with dense many-flowered spikes","First glume tapering to 3–8 mm awn with <strong>pectinate hairs on keel</strong>","Reproduction nearly entirely vegetative — fruit formation rare"],
+   substrate_detail:"In this area: margins of larger rivers, wetter riparian zones, sandbars. Tolerates alkaline.",where:"Scattered in eastern WA along Snake and lower Grande Ronde Rivers (Walla Walla RD near Troy). Documented in Hells Canyon NRA. Potential on Pomeroy RD and Wallowa Valley RD.",fieldCues:"CAUTION — sharp leaf edges. Very tall grass (to 2.5 m) in river margins and sandbars of major rivers.",survey:"Handle with care — very sharp leaves. Survey sandy riverbanks and sandbars of major rivers.",confusable:"Spartina gracilis — saline habitats, upper glumes awnless, shorter hairy ligules.",likelihood:"MODERATE along Grande Ronde and Snake River sandbars on Walla Walla and Pomeroy RDs."},
+
+  {code:"ELBR5",inat:120757,sci:"Elatine brachysperma",com:"Short-seeded Waterwort",status:"OR Sensitive",globalRank:"G5/S1",bloom:"May–June",elev:"165–4,165 ft",bloomMonths:["may","june"],substrate:"Mudflats, shallow pools, edges of ponds; freely rooting in mud",habitats:["aquatic"],priority:4,
+   keyChars:["Small aquatic annual (1–5 cm); freely rooting at nodes","Leaves not notched at tip, opposite, ovate","Flowers: 2–3 sepals, <strong>3 petals, 3 stamens</strong>; capsules 2-celled, sessile","Seeds: 6–8 rows of pits; <strong>9–17 pits per row</strong> (requires magnification)"],
+   substrate_detail:"Growing on mudflats, shallow pools, and edges of ponds. Freely rooting in mud.",where:"Central OR, southern CA, CO, and central US. Could be in Blue Mountains.",fieldCues:"Tiny aquatic plant on mudflats. Requires magnification for seed identification.",survey:"Collect specimens from mudflat populations for seed examination. Magnification required for species-level ID.",confusable:"Elatine chilensis — seeds with 16–25 pits per row, leaves longer and linear-spatulate, often notched tips.",likelihood:"LOW — look on mudflats and shallow pond edges."},
+
+  {code:"JUHEA",inat:120736,sci:"Juncus hemiendytus var. abjectus",com:"Least Rush",status:"OR Sensitive",globalRank:"G5/T5/S2?",bloom:"June–Aug",elev:"Low to moderate",bloomMonths:["june","july","aug"],substrate:"Sandy to clayey damp soils; vernal pools, seepage areas, low spots in meadows",habitats:["meadow","aquatic"],priority:4,
+   keyChars:["Tiny annual rush; single terminal flower; <strong>4–6 reddish tepals, erect or outcurved</strong>","Seeds NOT ridged","<strong>NO bract below flower; stem just below flower is swollen</strong> — distinguishes var. abjectus from var. hemiendytus","Collect and document all annual rush populations"],
+   substrate_detail:"Sandy to clayey damp soils in vernal pools, seepage areas, low spots in meadows.",where:"Documented sites south of Blue Mountains but could be present. Vernal pool and seep specialist.",fieldCues:"Very small annual rush — look in wet soil of vernal pools and seeps. Swollen stem below flower with no bract.",survey:"Distinguish from var. hemiendytus (OR Review list): abjectus has NO bract and swollen stem below flower. Collect all annual rush populations.",confusable:"Juncus kelloggii (also sensitive) — 1–4 flowers per head with 2 bractlets, 4 dark red tepals, >40 seeds per capsule, seeds prominently ridged.",likelihood:"LOW-MODERATE — look in vernal pools and wet depressions. Document all annual rushes."},
+
+  {code:"CATA",inat:120936,sci:"Carex tahoensis",com:"Tahoe Sedge",status:"OR Sensitive",globalRank:"G5/S1",bloom:"July–Sept",elev:"Subalpine",bloomMonths:["july","aug","sept"],substrate:"Subalpine dry and wet habitats",habitats:["alpine"],priority:4,
+   keyChars:["Subalpine sedge — technical key required for confident ID","Part of complex of similar high-elevation Carex species","Synonym: Carex eastwoodiana","Photograph spikes and perigynia carefully for confirmation"],
+   substrate_detail:"Subalpine dry and wet habitats at timberline zone.",where:"Documented on Umatilla NF and surrounding Blue Mountain forests.",fieldCues:"High-elevation subalpine sedge specialist. Survey any Carex in subalpine meadows and wetlands.",survey:"Name change from Carex eastwoodiana. Document all subalpine Carex with photos of spikes and perigynia.",confusable:"Other subalpine Carex spp. — technical key required.",likelihood:"MODERATE in subalpine meadow and wet habitats above 6,000 ft."},
+
+  {code:"CAVE5",inat:120940,sci:"Carex vernacula",com:"Foetid Sedge",status:"OR Sensitive",globalRank:"G4/S2",bloom:"July–Sept",elev:"Subalpine",bloomMonths:["july","aug","sept"],substrate:"Subalpine dry and wet habitats; wet meadows and stream margins at timberline",habitats:["alpine"],priority:4,
+   keyChars:["Subalpine/alpine sedge with distinctive odor when fresh","Technical characters required for ID — photograph spikes and perigynia","Odor can help field detection"],
+   substrate_detail:"Subalpine dry and wet habitats, wet meadows and stream margins at timberline.",where:"Documented on Umatilla NF high-elevation sites.",fieldCues:"Distinctive malodor when plants are handled. Document all subalpine Carex occurrences.",survey:"Note any unusual odor from Carex in subalpine settings. Document all subalpine Carex with photos.",confusable:"Other subalpine Carex spp. — technical key required.",likelihood:"MODERATE in subalpine wet habitats. Distinctive odor is a useful field cue."},
+
+  {code:"CAMI16",inat:120930,sci:"Carex micropoda",com:"Small-footed Sedge",status:"OR Sensitive",globalRank:"G5/S1",bloom:"July–Sept",elev:"Subalpine",bloomMonths:["july","aug","sept"],substrate:"Subalpine dry and wet habitats; timberline zone",habitats:["alpine"],priority:4,
+   keyChars:["Small subalpine/alpine sedge","Technical key required for confident ID","Common name recently changed from 'Pyrenaean sedge' to 'Small-footed sedge' per ORBIC/NatureServe","Photograph spikes, perigynia, and scales for confirmation"],
+   substrate_detail:"Subalpine dry and wet habitats, timberline zone.",where:"Documented in high-elevation sites on Umatilla NF and surrounding Blue Mountain forests.",fieldCues:"High elevation subalpine sedge. Document all subalpine Carex carefully.",survey:"Name change from 'Pyrenaean sedge' to 'Small-footed sedge' — update records.",confusable:"Other small alpine Carex spp. — technical key required.",likelihood:"MODERATE in subalpine habitats."},
+
+  {code:"CAFLR",inat:78905,sci:"Castilleja flava var. rustica",com:"Rustic Paintbrush",status:"OR Sensitive",globalRank:"G4G5/T3T4/S1",bloom:"July–Aug",elev:"Subalpine to alpine",bloomMonths:["july","aug"],substrate:"Subalpine dry sites, open rocky slopes, grasslands near timberline; lithosols",habitats:["alpine","lithosol"],priority:4,
+   keyChars:["Paintbrush of high-elevation dry sites","Bracts variable in color — technical Castilleja characters required","Common name recently changed from 'Rural paintbrush' to 'Rustic paintbrush' per ORBIC/NatureServe","Photograph bracts, corolla, and calyx carefully"],
+   substrate_detail:"Subalpine dry sites, open rocky slopes, grasslands near timberline. Also on lithosols.",where:"Umatilla NF North Fork John Day RD and southern portions of other districts at higher elevations.",fieldCues:"High-elevation paintbrush. Photograph all high-elevation Castilleja with bracts and corollas.",survey:"Name change documented in 2024 SSS — update all records. Collect any uncertain paintbrushes from high-elevation sites.",confusable:"Castilleja viscidula (also sensitive) — sticky-leaved habit. Multiple Castilleja spp. in area.",likelihood:"MODERATE at high elevations on North Fork John Day RD."},
+
+  {code:"SCPA8",inat:61712,sci:"Scirpus pallidus",com:"Pale Bulrush",status:"OR Sensitive",globalRank:"G5/S2?",bloom:"June–Aug",elev:"Low to moderate",bloomMonths:["june","july","aug"],substrate:"Wet meadows, marshes, and riparian areas; low to moderate elevation wetlands",habitats:["riparian","meadow"],priority:4,
+   keyChars:["Bulrush — Scirpus sensu stricto; pale coloration relative to other bulrushes","NEW to 2024 SSS list — may not be in older field guides","Synonym: Scirpus atrovirens ssp. pallidus","Technical key required; collect specimens with complete inflorescence"],
+   substrate_detail:"Wet meadows, marshes, and riparian areas. Low to moderate elevation wetlands.",where:"New to sensitive list. Documented on Umatilla NF; also WWNF and Malheur NF occurrence records.",fieldCues:"Pale coloration relative to the common green-black Scirpus atrovirens. Look in marshes and wet meadows.",survey:"New to 2024 SSS — absent from older guides. Collect all bulrush (Scirpus) specimens with complete inflorescence.",confusable:"Scirpus atrovirens — darker coloration, different scale characteristics. Technical key required.",likelihood:"MODERATE — new to list; worth actively surveying wet meadows and marshes."},
+
+  {code:"PYRAP2",inat:82387,sci:"Pyrrocoma racemosa var. paniculata",com:"Panicled Goldenweed",status:"OR Sensitive",globalRank:"G5/T4/S2?",bloom:"July–Sept",elev:"Low to moderate",bloomMonths:["july","aug","sept"],substrate:"Low elevation riparian and wet meadow habitats",habitats:["riparian","meadow"],priority:4,
+   keyChars:["Yellow-flowered composite in riparian/wet meadow habitats","Paniculate inflorescence — branched flower head arrangement","Technical key required for confirmation at variety level","Formerly Haplopappus racemosus var. paniculatus"],
+   substrate_detail:"Low elevation riparian zones and wet meadow habitats.",where:"Documented on Umatilla NF, particularly at lower elevations in riparian zones.",fieldCues:"Riparian and wet meadow specialist. Yellow composite with branched paniculate inflorescence.",survey:"Photograph and collect for variety-level confirmation. Note exact microhabitat.",confusable:"Pyrrocoma scaberula (also sensitive) — grassland/dry forest specialist, scabrid hispid stems with resinous glands.",likelihood:"MODERATE in lower elevation riparian zones on Umatilla NF."}
+];
+
+let activeHab = '', filtered = [...SP];
+
+function setHab(el, hab){
+  document.querySelectorAll('.chip').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  activeHab = hab;
+  applyFilters();
+}
+
+function applyFilters(){
+  const q = document.getElementById('search').value.toLowerCase();
+  const bl = document.getElementById('bloom-filter').value;
+  filtered = SP.filter(sp=>{
+    const mH = !activeHab || sp.habitats.includes(activeHab);
+    const mQ = !q || [sp.sci,sp.com,sp.code,sp.substrate,...sp.keyChars,sp.where,sp.fieldCues].join(' ').toLowerCase().includes(q);
+    const mB = !bl || sp.bloomMonths.includes(bl);
+    return mH && mQ && mB;
+  });
+  buildCards();
+}
+
+const TIER = {
+  1:{cls:'t1',label:'TIER 1 — Endemic / Globally Rare',desc:'Collect vouchers. GPS + photos mandatory.'},
+  2:{cls:'t2',label:'TIER 2 — Very Rare in Oregon',desc:'Document GPS, population count, and photos.'},
+  3:{cls:'t3',label:'TIER 3 — Oregon Sensitive S1',desc:'Document all occurrences with GPS and photos.'},
+  4:{cls:'t4',label:'TIER 4 — Oregon Sensitive S2',desc:'Record and photograph occurrences.'}
+};
+
+function buildCards(){
+  const c = document.getElementById('cards');
+  document.getElementById('rcount').textContent = filtered.length + ' spp';
+  if(!filtered.length){ c.innerHTML='<div class="no-res">No species match your filters.</div>'; return; }
+  let lastP = -1, html = '';
+  filtered.forEach((sp,i)=>{
+    if(sp.priority !== lastP){
+      const t = TIER[sp.priority];
+      html += `<div class="tier-hdr ${t.cls}"><h2>${t.label}</h2><p>${t.desc}</p></div>`;
+      lastP = sp.priority;
+    }
+    const tc = 'tg'+sp.priority;
+    const khtml = sp.keyChars.map(k=>`<li>${k}</li>`).join('');
+    const boxCls = sp.priority<=2 ? 'abox' : 'ibox';
+    html += `
+    <div class="card" id="c${i}">
+      <div class="stripe s${sp.priority}"></div>
+      <div class="card-hdr" onclick="toggle(${i})">
+        <div class="thumb" id="th${i}"><div class="noph">…</div></div>
+        <div class="card-meta">
+          <div class="sci">${sp.sci}</div>
+          <div class="com">${sp.com}</div>
+          <div class="tags">
+            <span class="tag ${tc}">${sp.globalRank}</span>
+            <span class="tag tg-bl">${sp.bloom}</span>
+            <span class="tag tg-co">${sp.code}</span>
+          </div>
+          <div class="row2"><span>↑ ${sp.elev}</span><span>${sp.status}</span></div>
+          <div class="exp-hint">▸ expand</div>
+        </div>
+      </div>
+      <div class="card-body" id="b${i}">
+        <div class="pstrip" id="ps${i}"><div class="pload">Loading…</div></div>
+        <div class="sl">Key field characters</div>
+        <ul class="kl">${khtml}</ul>
+        <div class="sl">Substrate & habitat</div>
+        <p class="st">${sp.substrate_detail}</p>
+        <div class="sl">Where to find it</div>
+        <p class="st">${sp.where}</p>
+        <div class="sl">Habitat cues</div>
+        <p class="st">${sp.fieldCues}</p>
+        <div class="sl">Survey guidance</div>
+        <div class="${boxCls}">${sp.survey}</div>
+        <div class="sl">Confusion risk</div>
+        <div class="wbox">${sp.confusable}</div>
+        <div class="sl">Detection likelihood</div>
+        <p class="st" style="font-weight:700">${sp.likelihood}</p>
+        <a class="inat-lnk" href="https://www.inaturalist.org/taxa/${sp.inat}" target="_blank">→ iNaturalist</a>
+      </div>
+    </div>`;
+  });
+  c.innerHTML = html;
+  filtered.forEach((sp,i) => loadPhoto(sp,i));
+}
+
+function toggle(i){
+  const b = document.getElementById('b'+i);
+  const h = document.querySelector('#c'+i+' .exp-hint');
+  const wasOpen = b.classList.contains('open');
+  document.querySelectorAll('.card-body.open').forEach(x=>x.classList.remove('open'));
+  document.querySelectorAll('.exp-hint').forEach(x=>x.textContent='▸ expand');
+  if(!wasOpen){
+    b.classList.add('open');
+    if(h) h.textContent='▾ collapse';
+  }
+}
+
+function loadPhoto(sp,i){
+  fetch(`https://api.inaturalist.org/v1/taxa/${sp.inat}`)
+    .then(r=>r.json())
+    .then(d=>{
+      const t = d.results&&d.results[0];
+      if(!t) return;
+      const th = document.getElementById('th'+i);
+      if(th && t.default_photo&&t.default_photo.medium_url)
+        th.innerHTML=`<img src="${t.default_photo.medium_url}" alt="${sp.com}" onerror="this.parentElement.innerHTML='<div class=noph>${sp.sci}</div>'">`;
+      const ps = document.getElementById('ps'+i);
+      if(ps){
+        const photos=(t.taxon_photos||[]).slice(0,4);
+        ps.innerHTML = photos.length
+          ? photos.map(p=>p.photo&&p.photo.medium_url?`<img src="${p.photo.medium_url}" alt="${sp.com}" onerror="this.style.display=\'none\'">`:'').filter(Boolean).join('')
+          : `<a class="inat-lnk" style="padding:8px;display:block" href="https://www.inaturalist.org/taxa/${sp.inat}" target="_blank">View photos on iNaturalist →</a>`;
+      }
+    })
+    .catch(()=>{
+      const th=document.getElementById('th'+i);
+      if(th) th.innerHTML=`<div class="noph">${sp.sci}</div>`;
+    });
+}
+
+document.getElementById('search').addEventListener('input', applyFilters);
+document.getElementById('bloom-filter').addEventListener('change', applyFilters);
+buildCards();
+</script>
+</body>
+</html>
